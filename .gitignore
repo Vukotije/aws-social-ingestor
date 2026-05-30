@@ -1,0 +1,10 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+tfplan
+
+__pycache__/
+*.py[cod]
+
+build/
+*.zip
