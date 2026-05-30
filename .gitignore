@@ -5,6 +5,9 @@ tfplan
 
 __pycache__/
 *.py[cod]
+.pytest_cache/
 
 build/
 *.zip
+
+.claude/
