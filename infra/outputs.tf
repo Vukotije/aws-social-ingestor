@@ -22,3 +22,20 @@ output "hacker_news_schedule_name" {
   description = "EventBridge schedule rule for Hacker News ingestion."
   value       = aws_cloudwatch_event_rule.daily_hacker_news_ingest.name
 }
+
+# X/Twitter bronze ingestion outputs (Marko) — sufficient to find the bucket and
+# X Lambda for a manual invoke and to locate the raw output in S3.
+output "x_lambda_name" {
+  description = "X/Twitter bronze ingestion Lambda name."
+  value       = aws_lambda_function.x_ingest.function_name
+}
+
+output "x_lambda_arn" {
+  description = "X/Twitter bronze ingestion Lambda ARN."
+  value       = aws_lambda_function.x_ingest.arn
+}
+
+output "x_bronze_prefix" {
+  description = "S3 key prefix where the X/Twitter raw dataset and metadata are written."
+  value       = "${var.bronze_prefix}/x"
+}
