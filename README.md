@@ -7,4 +7,5 @@ AWS data lake for real-time social analytics, engineered with a serverless Medal
 - [Agent guide](AGENTS.md)
 - [KT bronze control point plan](KT%20plan.md)
 - [Milos control-point infrastructure notes](infra/README.md)
+- [Vukan Hacker News bronze ingestion notes](lambda/hacker_news/README.md)
 - [Marko X/Twitter bronze ingestion notes](lambda/x/README.md)
