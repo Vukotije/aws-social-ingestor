@@ -1,12 +1,9 @@
 # X/Twitter dataset bronze ingestion Lambda.
 #
-# NOTE (team coordination): per the KT plan the X Lambda *resource* is nominally
-# Vukan's wiring task, while Marko owns the ingestion logic plus the variables/
-# outputs needed to invoke and verify it. Vukan's resource was not yet present in
-# the repo, so this minimal resource is included here to make Marko's invoke/
-# verify outputs real and keep `terraform validate` green. It reuses Milos's
-# shared bucket, shared bronze IAM role, and the shared environment contract.
-# Reconcile with Vukan's version at integration time (keep one definition).
+# Single shared definition for the X ingestion path (Marko owns the ingestion
+# logic + invoke/verify outputs; Vukan owns this Terraform wiring). It reuses
+# Milos's shared bucket, shared bronze IAM role, and the shared environment
+# contract.
 #
 # Unlike Hacker News, the X dataset is a one-off/manual upload, so there is no
 # EventBridge schedule here. It is invoked manually (see outputs + README).
