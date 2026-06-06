@@ -6,6 +6,7 @@ AWS data lake for real-time social analytics, engineered with a serverless Medal
 - [Project specification](PROJECT_SPECIFICATION.md)
 - [Agent guide](AGENTS.md)
 - [KT bronze control point plan](KT%20plan.md)
+- [Full implementation team plan](FULL_IMPLEMENTATION_PLAN.md)
 - [Milos control-point infrastructure notes](infra/README.md)
 - [Vukan Hacker News bronze ingestion notes](lambda/hacker_news/README.md)
 - [Marko X/Twitter bronze ingestion notes](lambda/x/README.md)
@@ -20,10 +21,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile \
   lambda/hacker_news/hn_ingest.py \
   lambda/x/handler.py \
   lambda/x/x_ingest.py \
-  lambda/x/validate.py
+  lambda/x/validate.py \
+  lambda/gold_to_postgres/handler.py
 
 PYTHONDONTWRITEBYTECODE=1 python3 tests/test_x_bronze.py
 PYTHONDONTWRITEBYTECODE=1 python3 tests/test_hacker_news_bronze.py
+PYTHONDONTWRITEBYTECODE=1 python3 tests/test_gold_to_postgres.py
 PYTHONDONTWRITEBYTECODE=1 python3 lambda/x/validate.py
 ```
 
@@ -51,6 +54,29 @@ AWS_PROFILE=social-ingestor aws lambda invoke \
   --payload '{}' \
   hn-response.json
 cat hn-response.json
+```
+
+Invoke the gold-to-PostgreSQL loader wiring check:
+
+```bash
+AWS_PROFILE=social-ingestor aws lambda invoke \
+  --function-name "$(terraform -chdir=infra output -raw gold_to_postgres_lambda_name)" \
+  --payload '{}' \
+  gold-loader-response.json
+cat gold-loader-response.json
+```
+
+Run the full Step Functions pipeline:
+
+```bash
+EXECUTION_ARN="$(AWS_PROFILE=social-ingestor aws stepfunctions start-execution \
+  --state-machine-arn "$(terraform -chdir=infra output -raw pipeline_state_machine_arn)" \
+  --input '{}' \
+  --query executionArn \
+  --output text)"
+
+AWS_PROFILE=social-ingestor aws stepfunctions describe-execution \
+  --execution-arn "$EXECUTION_ARN"
 ```
 
 Show the bronze objects in S3:
