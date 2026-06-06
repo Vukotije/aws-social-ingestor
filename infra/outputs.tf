@@ -39,3 +39,48 @@ output "x_bronze_prefix" {
   description = "S3 key prefix where the X/Twitter raw dataset and metadata are written."
   value       = "${var.bronze_prefix}/x"
 }
+
+output "vpc_id" {
+  description = "Project VPC ID."
+  value       = aws_vpc.main.id
+}
+
+output "public_subnet_ids" {
+  description = "Public subnet IDs for EC2-hosted PostgreSQL/Superset services."
+  value       = aws_subnet.public[*].id
+}
+
+output "lambda_security_group_id" {
+  description = "Security group ID for project Lambdas that later need VPC access."
+  value       = aws_security_group.lambda.id
+}
+
+output "postgres_security_group_id" {
+  description = "Security group ID for PostgreSQL."
+  value       = aws_security_group.postgres.id
+}
+
+output "superset_security_group_id" {
+  description = "Security group ID for Superset."
+  value       = aws_security_group.superset.id
+}
+
+output "pipeline_state_machine_arn" {
+  description = "Step Functions state machine ARN for the full medallion pipeline."
+  value       = aws_sfn_state_machine.pipeline.arn
+}
+
+output "gold_to_postgres_lambda_name" {
+  description = "Gold-to-PostgreSQL loader Lambda name."
+  value       = aws_lambda_function.gold_to_postgres.function_name
+}
+
+output "postgres_password_secret_arn" {
+  description = "Secrets Manager ARN for the PostgreSQL password placeholder."
+  value       = aws_secretsmanager_secret.postgres_password.arn
+}
+
+output "notification_webhook_secret_arn" {
+  description = "Secrets Manager ARN for the notification webhook placeholder."
+  value       = aws_secretsmanager_secret.notification_webhook.arn
+}
