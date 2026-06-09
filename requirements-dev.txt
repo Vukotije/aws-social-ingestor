@@ -1,0 +1,17 @@
+# Runtime deps for the data Lambdas + the Parquet/S3 integration test.
+#
+# The unit, e2e, and HTTP-notification tests run on the Python stdlib alone.
+# Only tests/test_integration_gold_s3_parquet.py needs these (it drives the gold
+# handler's real awswrangler Parquet I/O against a moto-mocked S3):
+#
+#   python -m venv .venv
+#   .venv/bin/pip install -r requirements-dev.txt
+#   .venv/bin/python tests/test_integration_gold_s3_parquet.py
+#
+# pandas + pyarrow are also the gold Lambda's real dependencies (via the
+# awswrangler / AWS SDK for pandas Lambda layer at deploy time).
+pandas
+pyarrow
+boto3
+moto[s3]
+awswrangler
