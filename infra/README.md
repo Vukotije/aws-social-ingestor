@@ -1,6 +1,6 @@
-# Milos Control-Point Infrastructure
+# Milos Infrastructure Notes
 
-This folder contains the initial Terraform foundation for the bronze control point.
+This folder contains Terraform for the bronze control point plus Milos's full-project slice.
 
 Milos's scope:
 
@@ -9,8 +9,10 @@ Milos's scope:
 - Hacker News Lambda resource.
 - Daily EventBridge schedule for Hacker News ingestion.
 - Outputs used by Vukan and Marko during integration.
-
-The Hacker News Lambda currently contains only a minimal handler skeleton in `../lambda/hacker_news/handler.py`. Vukan should replace the skeleton body with the real Hacker News API ingestion logic while keeping the same handler name and environment variable contract.
+- VPC, public subnets, route tables, and security groups for Lambda, PostgreSQL, and Superset.
+- Secrets Manager placeholders for PostgreSQL credentials and notification webhooks.
+- Step Functions state machine that runs bronze ingestion, placeholder silver/gold steps, and the gold-to-PostgreSQL loader.
+- Gold-to-PostgreSQL Lambda skeleton for the final export step.
 
 ## Shared Environment Variables
 
@@ -20,6 +22,9 @@ The Hacker News Lambda currently contains only a minimal handler skeleton in `..
 | `BRONZE_PREFIX` | S3 prefix for bronze data, defaults to `bronze` |
 | `INGESTION_DATE` | Optional test override for the ingestion date |
 | `TARGET_DATE` | Optional test override for the source data date |
+| `DATA_LAKE_BUCKET` | S3 bucket used by the gold loader |
+| `GOLD_PREFIX` | S3 prefix for gold metric outputs, defaults to `gold` |
+| `POSTGRES_PASSWORD_SECRET_ARN` | Secrets Manager ARN for the PostgreSQL password |
 
 ## Expected Hacker News Output Layout
 
@@ -33,30 +38,43 @@ s3://<data-lake-bucket>/bronze/hacker_news/
 ## Terraform Commands
 
 ```bash
-cd infra
-terraform init
-terraform fmt
-terraform validate
-terraform plan
+terraform -chdir=infra init
+terraform -chdir=infra fmt
+terraform -chdir=infra validate
+AWS_PROFILE=social-ingestor terraform -chdir=infra plan
 ```
 
 Deploy when ready:
 
 ```bash
-terraform apply
+AWS_PROFILE=social-ingestor terraform -chdir=infra apply
 ```
 
-Manually invoke the skeleton Lambda:
+Invoke the loader wiring check:
 
 ```bash
-aws lambda invoke \
-  --function-name "$(terraform output -raw hacker_news_lambda_name)" \
+AWS_PROFILE=social-ingestor aws lambda invoke \
+  --function-name "$(terraform -chdir=infra output -raw gold_to_postgres_lambda_name)" \
   --payload '{}' \
-  hn-response.json
+  gold-loader-response.json
+cat gold-loader-response.json
 ```
 
-List the bucket after real ingestion is implemented:
+Run the Step Functions pipeline:
 
 ```bash
-aws s3 ls "s3://$(terraform output -raw data_lake_bucket)/$(terraform output -raw bronze_prefix)/hacker_news/" --recursive
+EXECUTION_ARN="$(AWS_PROFILE=social-ingestor aws stepfunctions start-execution \
+  --state-machine-arn "$(terraform -chdir=infra output -raw pipeline_state_machine_arn)" \
+  --input '{}' \
+  --query executionArn \
+  --output text)"
+
+AWS_PROFILE=social-ingestor aws stepfunctions describe-execution \
+  --execution-arn "$EXECUTION_ARN"
+```
+
+List the bucket after ingestion:
+
+```bash
+AWS_PROFILE=social-ingestor aws s3 ls "s3://$(terraform -chdir=infra output -raw data_lake_bucket)/$(terraform -chdir=infra output -raw bronze_prefix)/" --recursive
 ```
