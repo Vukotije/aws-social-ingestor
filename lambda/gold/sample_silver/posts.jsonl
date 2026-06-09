@@ -1,0 +1,8 @@
+{"post_id": "p1", "platform": "Hacker News", "author_username": "alice", "content_text": "Show HN: a tiny data lake", "created_at": "2026-01-15T12:00:00Z", "post_type": "story", "score": 1200}
+{"post_id": "p2", "platform": "Hacker News", "author_username": "bob", "content_text": "We are hiring a senior engineer", "created_at": "2026-01-15T13:00:00Z", "post_type": "job", "score": 80}
+{"post_id": "p3", "platform": "Hacker News", "author_username": "bob", "content_text": "Junior role, remote", "created_at": "2026-01-15T14:00:00Z", "post_type": "job", "score": 5}
+{"post_id": "p4", "platform": "Hacker News", "author_username": "alice", "content_text": "Nice write-up, thanks", "created_at": "2026-01-15T15:00:00Z", "post_type": "comment", "score": null}
+{"post_id": "p5", "platform": "Hacker News", "author_username": "carol", "content_text": "Ask HN: best Parquet tips?", "created_at": "2026-01-16T09:30:00Z", "post_type": "ask", "score": 40}
+{"post_id": "p6", "platform": "Hacker News", "author_username": "dave", "content_text": "Another story", "created_at": "2026-01-16T11:00:00Z", "post_type": "story", "score": 220}
+{"post_id": "t1", "platform": "X", "author_username": "@nova", "content_text": "gm builders", "created_at": "2026-01-15T11:00:00Z", "post_type": "tweet", "score": null}
+{"post_id": "t2", "platform": "X", "author_username": "@pip", "content_text": "RT: data lakes are neat", "created_at": "2026-01-16T11:00:00Z", "post_type": "retweet", "score": null}
