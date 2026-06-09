@@ -27,3 +27,33 @@ variable "hacker_news_schedule_expression" {
   type        = string
   default     = "cron(0 2 * * ? *)"
 }
+
+variable "vpc_cidr" {
+  description = "CIDR block for the project VPC."
+  type        = string
+  default     = "10.40.0.0/16"
+}
+
+variable "public_subnet_cidrs" {
+  description = "CIDR blocks for public subnets used by EC2-hosted services."
+  type        = list(string)
+  default     = ["10.40.1.0/24", "10.40.2.0/24"]
+}
+
+variable "admin_cidr_blocks" {
+  description = "CIDR blocks allowed to reach Superset/SSH. Keep narrow for defense deployments."
+  type        = list(string)
+  default     = ["127.0.0.1/32"]
+}
+
+variable "silver_prefix" {
+  description = "S3 prefix for silver-layer objects."
+  type        = string
+  default     = "silver"
+}
+
+variable "gold_prefix" {
+  description = "S3 prefix for gold-layer objects."
+  type        = string
+  default     = "gold"
+}
