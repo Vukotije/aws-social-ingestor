@@ -27,6 +27,8 @@ data "aws_iam_policy_document" "pipeline_state_machine" {
     resources = [
       aws_lambda_function.hacker_news_ingest.arn,
       aws_lambda_function.x_ingest.arn,
+      aws_lambda_function.silver.arn,
+      aws_lambda_function.gold.arn,
       aws_lambda_function.gold_to_postgres.arn,
     ]
   }
@@ -52,7 +54,7 @@ resource "aws_sfn_state_machine" "pipeline" {
   role_arn = aws_iam_role.pipeline_state_machine.arn
 
   definition = jsonencode({
-    Comment = "Medallion pipeline orchestration for bronze, silver, gold, and PostgreSQL loading."
+    Comment = "Medallion pipeline orchestration: bronze ingestion -> silver normalization -> gold metrics -> PostgreSQL load."
     StartAt = "IngestHackerNews"
     States = {
       IngestHackerNews = {
@@ -83,23 +85,37 @@ resource "aws_sfn_state_machine" "pipeline" {
           ResultPath  = "$.error"
           Next        = "PipelineFailed"
         }]
-        Next = "SilverNormalizationPlaceholder"
+        Next = "SilverNormalization"
       }
-      SilverNormalizationPlaceholder = {
-        Type = "Pass"
-        Result = {
-          message = "Silver normalization state placeholder for Vukan's Lambda."
+      SilverNormalization = {
+        Type     = "Task"
+        Resource = "arn:aws:states:::lambda:invoke"
+        Parameters = {
+          FunctionName = aws_lambda_function.silver.arn
+          Payload      = {}
         }
         ResultPath = "$.silver"
-        Next       = "GoldMetricsPlaceholder"
+        Catch = [{
+          ErrorEquals = ["States.ALL"]
+          ResultPath  = "$.error"
+          Next        = "PipelineFailed"
+        }]
+        Next = "GoldMetrics"
       }
-      GoldMetricsPlaceholder = {
-        Type = "Pass"
-        Result = {
-          message = "Gold metrics state placeholder for Marko's Lambda."
+      GoldMetrics = {
+        Type     = "Task"
+        Resource = "arn:aws:states:::lambda:invoke"
+        Parameters = {
+          FunctionName = aws_lambda_function.gold.arn
+          Payload      = {}
         }
         ResultPath = "$.gold"
-        Next       = "LoadGoldToPostgres"
+        Catch = [{
+          ErrorEquals = ["States.ALL"]
+          ResultPath  = "$.error"
+          Next        = "PipelineFailed"
+        }]
+        Next = "LoadGoldToPostgres"
       }
       LoadGoldToPostgres = {
         Type     = "Task"
@@ -108,7 +124,13 @@ resource "aws_sfn_state_machine" "pipeline" {
           FunctionName = aws_lambda_function.gold_to_postgres.arn
           Payload = {
             metric_tables = [
+              "daily_hn_item_counts",
               "daily_users_metric",
+              "top_x_users_by_followers",
+              "top_hn_users_by_karma_high",
+              "top_hn_users_by_karma_low",
+              "top_hn_jobs_by_score",
+              "top_hn_stories_by_score",
               "data_quality_score",
             ]
           }

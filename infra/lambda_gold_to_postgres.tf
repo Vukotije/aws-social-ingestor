@@ -1,3 +1,19 @@
+# --- gold->Postgres loader gating & layers -----------------------------------
+# This Lambda upserts the gold metric tables into PostgreSQL. It reads gold
+# Parquet via awswrangler and connects with psycopg2, so the function needs BOTH
+# a psycopg2 layer and the awswrangler layer attached.
+#
+# The loader gates real upserts behind GOLD_LOAD_EXECUTE *and* a real
+# POSTGRES_HOST: while POSTGRES_HOST is the placeholder "pending-postgres-host"
+# the handler returns its dry_run wiring response and never opens a DB
+# connection. Once a real host is wired in, GOLD_LOAD_EXECUTE="1" auto-enables
+# the live load.
+variable "psycopg2_layer_arn" {
+  type        = string
+  default     = ""
+  description = "ARN of a psycopg2 Lambda layer for the gold->Postgres loader."
+}
+
 data "archive_file" "gold_to_postgres_lambda" {
   type        = "zip"
   source_dir  = "${path.module}/../lambda/gold_to_postgres"
@@ -76,14 +92,22 @@ resource "aws_lambda_function" "gold_to_postgres" {
   timeout          = 120
   memory_size      = 256
 
+  # Needs psycopg2 (DB driver) + awswrangler (read gold Parquet); compact()
+  # drops either ARN that is left empty.
+  layers = compact([var.awswrangler_layer_arn, var.psycopg2_layer_arn])
+
   environment {
     variables = {
-      DATA_LAKE_BUCKET                = aws_s3_bucket.data_lake.bucket
-      GOLD_PREFIX                     = var.gold_prefix
-      POSTGRES_DB                     = "social_metrics"
-      POSTGRES_HOST                   = "pending-postgres-host"
-      POSTGRES_PASSWORD_SECRET_ARN    = aws_secretsmanager_secret.postgres_password.arn
-      POSTGRES_USER                   = "social_loader"
+      DATA_LAKE_BUCKET             = aws_s3_bucket.data_lake.bucket
+      GOLD_PREFIX                  = var.gold_prefix
+      POSTGRES_DB                  = "social_metrics"
+      POSTGRES_HOST                = "pending-postgres-host"
+      POSTGRES_PORT                = "5432"
+      POSTGRES_PASSWORD_SECRET_ARN = aws_secretsmanager_secret.postgres_password.arn
+      POSTGRES_USER                = "social_loader"
+      # Real upserts auto-enable once a real POSTGRES_HOST replaces the
+      # "pending-postgres-host" placeholder above (see the gating note at top).
+      GOLD_LOAD_EXECUTE               = "1"
       NOTIFICATION_WEBHOOK_SECRET_ARN = aws_secretsmanager_secret.notification_webhook.arn
     }
   }
